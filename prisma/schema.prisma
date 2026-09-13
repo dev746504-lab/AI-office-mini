@@ -133,12 +133,61 @@ model ReportLog {
 /// Ke hoach kinh doanh theo thang - de Agent Kinh doanh co can cu THAT de so sanh,
 /// khong tu suy dien muc tieu (dung nguyen tac data-strict.md).
 model BusinessPlan {
-  id            Int      @id @default(autoincrement())
+  id              Int      @id @default(autoincrement())
   /// Dinh dang "YYYY-MM", vd "2026-09"
-  month         String   @unique @db.VarChar(7)
-  targetRevenue Int      @map("target_revenue")
-  notes         String?  @db.Text
-  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(6)
+  month           String   @unique @db.VarChar(7)
+  targetRevenue   Int      @map("target_revenue")
+  targetOrders    Int?     @map("target_orders")
+  targetAvgTicket Int?     @map("target_avg_ticket")
+  costBudgetTotal Int?     @map("cost_budget_total")
+  notes           String?  @db.Text
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(6)
 
   @@map("business_plans")
+}
+
+/// Danh muc chi phi — lookup table cho cac loai chi phi van hanh cua hang.
+model CostCategory {
+  id          Int     @id @default(autoincrement())
+  name        String  @db.VarChar(100)
+  /// "cogs" | "labor" | "opex"
+  type        String  @db.VarChar(20)
+  description String? @db.VarChar(500)
+  sortOrder   Int     @default(0) @map("sort_order")
+  isFixed     Boolean @default(false) @map("is_fixed") @db.TinyInt
+
+  dailyCosts         DailyCost[]
+  monthlyCostBudgets MonthlyCostBudget[]
+
+  @@map("cost_categories")
+}
+
+/// Chi phi thuc te theo ngay — Admin nhap hoac import tu he thong ke toan.
+model DailyCost {
+  id         Int          @id @default(autoincrement())
+  date       DateTime     @db.Date
+  categoryId Int          @map("category_id")
+  amount     Int
+  notes      String?      @db.VarChar(500)
+  createdAt  DateTime     @default(now()) @map("created_at") @db.DateTime(6)
+  category   CostCategory @relation(fields: [categoryId], references: [id])
+
+  @@unique([date, categoryId])
+  @@index([date])
+  @@map("daily_costs")
+}
+
+/// Ngan sach chi phi theo thang va danh muc — de so sanh chi phi thuc te vs ke hoach.
+model MonthlyCostBudget {
+  id           Int          @id @default(autoincrement())
+  /// Dinh dang "YYYY-MM"
+  month        String       @db.VarChar(7)
+  categoryId   Int          @map("category_id")
+  budgetAmount Int          @map("budget_amount")
+  notes        String?      @db.VarChar(500)
+  updatedAt    DateTime     @default(now()) @updatedAt @map("updated_at") @db.DateTime(6)
+  category     CostCategory @relation(fields: [categoryId], references: [id])
+
+  @@unique([month, categoryId])
+  @@map("monthly_cost_budgets")
 }

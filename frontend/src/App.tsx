@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import { RequireAuth } from './auth/RequireAuth';
 import { AppShell } from './layout/AppShell';
+import { ThemeProvider } from './theme/ThemeContext';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
@@ -22,6 +23,7 @@ function RouteFallback() {
 
 export default function App() {
   return (
+    <ThemeProvider>
     <BrowserRouter basename="/ai-agent-config">
       <AuthProvider>
         <Suspense fallback={<RouteFallback />}>
@@ -45,5 +47,6 @@ export default function App() {
         </Suspense>
       </AuthProvider>
     </BrowserRouter>
+    </ThemeProvider>
   );
 }

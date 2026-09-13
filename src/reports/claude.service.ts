@@ -20,8 +20,8 @@ const CLAUDE_DIR = path.join(process.cwd(), '.claude');
  * .claude/skills/*.md, sua duoc qua man hinh "Cau hinh AI".
  */
 const AGENT_SKILLS: Record<string, string[]> = {
-  'finance.md': ['expense-summary.md'],
-  'business.md': ['plan-tracking.md'],
+  'finance.md': ['expense-summary.md', 'fnb-financial-analysis.md'],
+  'business.md': ['plan-tracking.md', 'fnb-financial-analysis.md'],
   'marketing.md': ['content-writing.md', 'market-research.md', 'customer-psychology.md', 'marketing-psychology-retail.md', 'customer-behavior-signals.md', 'pack-marketing-psychology.md', 'pack-customer-research.md'],
   'content-creator.md': ['social-post.md', 'ad-script.md', 'pack-social.md', 'pack-copywriting.md', 'pack-ad-creative.md'],
   'finance-daily.md': [],

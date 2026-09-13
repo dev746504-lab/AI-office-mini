@@ -150,7 +150,14 @@ export class CronService {
     const month = toDateStr.slice(0, 7); // "YYYY-MM"
     const plan = await this.businessPlanService.getByMonth(month);
     if (!plan) return null;
-    return { month: plan.month, targetRevenue: plan.targetRevenue, notes: plan.notes };
+    return {
+      month: plan.month,
+      targetRevenue: plan.targetRevenue,
+      targetOrders: plan.targetOrders ?? null,
+      targetAvgTicket: plan.targetAvgTicket ?? null,
+      costBudgetTotal: plan.costBudgetTotal ?? null,
+      notes: plan.notes,
+    };
   }
 
   private buildPeriodLabel(periodType: ReportPeriodType, fromDateStr: string, toDateStr: string): string {

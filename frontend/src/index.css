@@ -5,19 +5,42 @@
   --font-body: "DM Sans", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
-  --color-void: #05080f;
-  --color-void-2: #070d1c;
-  --color-panel: #0a162a;
-  --color-ink: #e2eeff;
-  --color-dim: #7b92b8;
-  --color-mono-dim: #3a5070;
-  --color-faint: #2a3c54;
-
+  /* Accent/brand — bất biến theo theme */
   --color-cyan: #00d9f5;
   --color-purple: #a78bfa;
   --color-green: #34d399;
   --color-amber: #fbbf24;
   --color-red: #f87171;
+}
+
+/* ── Semantic tokens — dark (mặc định) ── */
+:root {
+  --color-void:      #05080f;
+  --color-void-2:    #070d1c;
+  --color-panel:     #0a162a;
+  --color-ink:       #e2eeff;
+  --color-dim:       #7b92b8;
+  --color-mono-dim:  #3a5070;
+  --color-faint:     #2a3c54;
+
+  --border-subtle:   rgba(255, 255, 255, 0.08);
+  --glass-bg:        rgba(10, 22, 42, 0.6);
+  --shadow-panel:    rgba(0, 0, 0, 0.55);
+}
+
+/* ── Light mode overrides ── */
+[data-theme="light"] {
+  --color-void:      #f0f5fc;
+  --color-void-2:    #e8f0f9;
+  --color-panel:     #ffffff;
+  --color-ink:       #0d1b35;
+  --color-dim:       #4a6082;
+  --color-mono-dim:  #6a84a0;
+  --color-faint:     #8aa0b8;
+
+  --border-subtle:   rgba(13, 27, 80, 0.1);
+  --glass-bg:        rgba(255, 255, 255, 0.72);
+  --shadow-panel:    rgba(100, 140, 200, 0.12);
 }
 
 html,
@@ -40,6 +63,9 @@ body {
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 217, 245, 0.25) transparent;
 }
+[data-theme="light"] * {
+  scrollbar-color: rgba(0, 100, 200, 0.2) transparent;
+}
 *::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -48,30 +74,29 @@ body {
   background: rgba(0, 217, 245, 0.25);
   border-radius: 100px;
 }
+[data-theme="light"] *::-webkit-scrollbar-thumb {
+  background: rgba(0, 100, 200, 0.18);
+}
 
-/* ── Glass panel primitive dung chung cho sidebar card / terminal ── */
+/* ── Glass panel primitive ── */
 .glass-panel {
-  background: rgba(10, 22, 42, 0.6);
+  background: var(--glass-bg);
   backdrop-filter: blur(22px);
   -webkit-backdrop-filter: blur(22px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle);
 }
 
 .glass-edge-glow {
   box-shadow:
     0 0 0 1px rgba(0, 217, 245, 0.04),
-    0 24px 70px rgba(0, 0, 0, 0.55),
+    0 24px 70px var(--shadow-panel),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
-/* ── Trang tri hologram scanline tren terminal ── */
+/* ── Scanline hologram ── */
 @keyframes scanline-move {
-  0% {
-    transform: translateY(-100%);
-  }
-  100% {
-    transform: translateY(100%);
-  }
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
 }
 .scanline {
   position: absolute;
@@ -95,45 +120,29 @@ body {
   animation: scanline-move 6s linear infinite;
 }
 
-/* ── LED / status dot pulse ── */
+/* ── Status dot pulse ── */
 @keyframes pulse-dot {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: scale(0.6);
-  }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.6); }
 }
 .status-dot {
   animation: pulse-dot 2.2s ease-in-out infinite;
 }
 
-/* ── Audio-visualizer bars khi dang go phim ── */
+/* ── Audio-visualizer bars ── */
 @keyframes eq-bar {
-  0%,
-  100% {
-    transform: scaleY(0.25);
-  }
-  50% {
-    transform: scaleY(1);
-  }
+  0%, 100% { transform: scaleY(0.25); }
+  50%       { transform: scaleY(1); }
 }
 .eq-bar {
   animation: eq-bar 0.6s ease-in-out infinite;
   transform-origin: bottom;
 }
 
-/* ── Laser sweep tren nut Deploy khi hover ── */
+/* ── Laser sweep trên nút Deploy khi hover ── */
 @keyframes laser-sweep {
-  0% {
-    transform: translateX(-130%);
-  }
-  100% {
-    transform: translateX(130%);
-  }
+  0%   { transform: translateX(-130%); }
+  100% { transform: translateX(130%); }
 }
 .laser-sweep::before {
   content: "";
@@ -146,28 +155,20 @@ body {
   animation: laser-sweep 0.9s ease forwards;
 }
 
-/* ── Con tro nhap nhay kieu terminal ── */
+/* ── Con trỏ nhấp nháy terminal ── */
 @keyframes cursor-blink {
-  50% {
-    opacity: 0;
-  }
+  50% { opacity: 0; }
 }
 .cursor-blink {
   display: inline-block;
   animation: cursor-blink 0.9s step-end infinite;
 }
 
-/* ── Progress bar (indeterminate) khi dang luu ── */
+/* ── Progress bar indeterminate ── */
 @keyframes progress-indeterminate {
-  0% {
-    transform: translateX(-60%) scaleX(0.4);
-  }
-  50% {
-    transform: translateX(20%) scaleX(0.7);
-  }
-  100% {
-    transform: translateX(120%) scaleX(0.4);
-  }
+  0%   { transform: translateX(-60%) scaleX(0.4); }
+  50%  { transform: translateX(20%) scaleX(0.7); }
+  100% { transform: translateX(120%) scaleX(0.4); }
 }
 .progress-indeterminate {
   animation: progress-indeterminate 1.1s ease-in-out infinite;

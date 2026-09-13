@@ -36,6 +36,11 @@ export const AI_CONFIG_MAP: Record<string, AiConfigEntry> = {
   },
   'plan-tracking': { path: 'skills/plan-tracking.md', label: 'Bám kế hoạch kinh doanh (Kinh doanh)', group: 'skill' },
   'expense-summary': { path: 'skills/expense-summary.md', label: 'Tổng hợp thu chi tháng (Tài chính)', group: 'skill' },
+  'fnb-financial-analysis': {
+    path: 'skills/fnb-financial-analysis.md',
+    label: 'Phân tích tài chính F&B (Tài chính + Kinh doanh)',
+    group: 'skill',
+  },
   'content-creator': { path: 'agents/content-creator.md', label: 'Content Creator (tạo content hàng ngày)', group: 'department' },
   'social-post': { path: 'skills/social-post.md', label: 'Viết bài Facebook/Zalo (Content Creator)', group: 'skill' },
   'ad-script': { path: 'skills/ad-script.md', label: 'Kịch bản quảng cáo (Content Creator)', group: 'skill' },

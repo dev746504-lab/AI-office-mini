@@ -256,6 +256,8 @@ export class KiotVietService {
       // co hang nghin hoa don, gui het se qua tai prompt va ton kem token.
       invoices: periodType === 'day' ? invoices : null,
       businessPlan,
+      financialSummary: null,
+      historicalMonths: null,
     };
 
     this.logger.log(

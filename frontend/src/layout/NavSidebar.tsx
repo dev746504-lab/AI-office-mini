@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { useTheme } from '../theme/ThemeContext';
 import type { UserRole } from '../types';
 
 interface NavItem {
@@ -24,6 +25,7 @@ const ROLE_LABEL: Record<UserRole, string> = {
 export function NavSidebar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { theme, toggle } = useTheme();
 
   const visibleItems = NAV_ITEMS.filter((item) => !item.roles || (user && item.roles.includes(user.role)));
   const isAdmin = user?.role === 'admin';
@@ -84,6 +86,16 @@ export function NavSidebar() {
             <span>⚙️</span> Cài đặt hệ thống
           </NavLink>
         )}
+        <button
+          type="button"
+          onClick={toggle}
+          title={theme === 'dark' ? 'Chuyển sang Light mode' : 'Chuyển sang Dark mode'}
+          className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 font-mono text-xs transition-colors hover:bg-white/5"
+          style={{ color: 'var(--color-dim)' }}
+        >
+          <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
+          <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
+        </button>
         <div className="glass-panel flex items-center gap-2.5 rounded-xl p-3">
           <div
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-display text-xs font-bold"
@@ -111,6 +123,15 @@ export function NavSidebar() {
         </div>
       </div>
 
+      <button
+        type="button"
+        onClick={toggle}
+        title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+        className="shrink-0 rounded-xl p-2 text-base transition-colors md:hidden"
+        style={{ color: 'var(--color-dim)' }}
+      >
+        {theme === 'dark' ? '☀️' : '🌙'}
+      </button>
       <button
         type="button"
         onClick={handleLogout}
