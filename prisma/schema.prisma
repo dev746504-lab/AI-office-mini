@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique @db.VarChar(191)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  role         String   @default("ai_manager") @db.VarChar(20)
+  createdAt    DateTime @default(now()) @map("created_at") @db.DateTime(6)
+
+  @@map("users")
+}
+
+model AppSettings {
+  id                   Int      @id
+  kiotvietClientId     String?  @map("kiotviet_client_id") @db.VarChar(255)
+  kiotvietClientSecret String?  @map("kiotviet_client_secret") @db.VarChar(255)
+  kiotvietRetailer     String?  @map("kiotviet_retailer") @db.VarChar(100)
+  kiotvietTokenUrl     String   @default("https://id.kiotviet.vn/connect/token") @map("kiotviet_token_url") @db.VarChar(255)
+  kiotvietApiBaseUrl   String   @default("https://public.kiotviet.vn") @map("kiotviet_api_base_url") @db.VarChar(255)
+  anthropicApiKey      String?  @map("anthropic_api_key") @db.VarChar(255)
+  smtpHost             String?  @map("smtp_host") @db.VarChar(100)
+  smtpPort             Int      @default(465) @map("smtp_port")
+  smtpSecure           Boolean  @default(true) @map("smtp_secure") @db.TinyInt
+  smtpUser             String?  @map("smtp_user") @db.VarChar(255)
+  smtpPass             String?  @map("smtp_pass") @db.VarChar(255)
+  reportEmailFrom      String?  @map("report_email_from") @db.VarChar(255)
+  reportEmailTo        String?  @map("report_email_to") @db.Text
+  reportSendHour       Int      @default(23) @map("report_send_hour") @db.TinyInt
+  reportSendMinute     Int      @default(0) @map("report_send_minute") @db.TinyInt
+  contentSendHour      Int      @default(8) @map("content_send_hour") @db.TinyInt
+  contentSendMinute    Int      @default(0) @map("content_send_minute") @db.TinyInt
+  updatedAt            DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(6)
+
+  @@map("app_settings")
+}
+
+/// Thong tin thuong hieu - singleton (id=1), Admin nhap 1 lan, AI dung de viet content hang ngay.
+model BrandContext {
+  id               Int      @id
+  storeName        String?  @map("store_name") @db.VarChar(255)
+  storeAddress     String?  @map("store_address") @db.VarChar(500)
+  productsOverview String?  @map("products_overview") @db.Text
+  targetAudience   String?  @map("target_audience") @db.Text
+  toneOfVoice      String?  @map("tone_of_voice") @db.Text
+  uniquePoints     String?  @map("unique_points") @db.Text
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(6)
+
+  @@map("brand_context")
+}
+
+/// Lich content theo thu (0=CN, 1=T2...6=T7) - Admin dat chu de, AI viet theo do.
+model ContentSchedule {
+  id        Int     @id @default(autoincrement())
+  dayOfWeek Int     @unique @map("day_of_week") @db.TinyInt
+  theme     String? @db.VarChar(255)
+  notes     String? @db.Text
+
+  @@map("content_schedule")
+}
+
+/// Log ket qua tao content moi ngay - dung de audit va hien thi lich su.
+model ContentLog {
+  id           Int      @id @default(autoincrement())
+  contentDate  DateTime @unique @map("content_date") @db.Date
+  fbPost       String?  @map("fb_post") @db.MediumText
+  adScript     String?  @map("ad_script") @db.MediumText
+  status       String   @db.VarChar(20)
+  errorMessage String?  @map("error_message") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at") @db.DateTime(6)
+
+  @@map("content_logs")
+}
+
+/// Cau hinh lich gui cho tung agent tu dong (finance/business/marketing).
+/// agentName la key ngan: "finance" | "business" | "marketing"
+model AgentSendConfig {
+  id         Int     @id @default(autoincrement())
+  agentName  String  @unique @map("agent_name") @db.VarChar(50)
+  sendHour   Int     @default(8) @map("send_hour") @db.TinyInt
+  sendMinute Int     @default(0) @map("send_minute") @db.TinyInt
+  enabled    Boolean @default(true)
+
+  @@map("agent_send_config")
+}
+
+/// Lich kich ban theo thu cho tung agent tu dong.
+model AgentSchedule {
+  id        Int     @id @default(autoincrement())
+  agentName String  @map("agent_name") @db.VarChar(50)
+  dayOfWeek Int     @map("day_of_week") @db.TinyInt
+  theme     String? @db.VarChar(255)
+  notes     String? @db.Text
+
+  @@unique([agentName, dayOfWeek])
+  @@map("agent_schedules")
+}
+
+/// Log ket qua moi lan agent tu dong chay.
+model AgentLog {
+  id           Int      @id @default(autoincrement())
+  agentName    String   @map("agent_name") @db.VarChar(50)
+  runDate      DateTime @map("run_date") @db.Date
+  output       String?  @db.MediumText
+  status       String   @db.VarChar(20)
+  errorMessage String?  @map("error_message") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at") @db.DateTime(6)
+
+  @@unique([agentName, runDate])
+  @@map("agent_logs")
+}
+
+model ReportLog {
+  id           Int      @id @default(autoincrement())
+  /// "day" | "week" | "month" - loai bao cao, dung de phan biet dedup theo tung chu ky
+  periodType   String   @default("day") @map("period_type") @db.VarChar(10)
+  reportDate   DateTime @db.Date
+  status       String   @db.VarChar(20)
+  invoiceCount Int      @default(0)
+  errorMessage String?  @db.Text
+  createdAt    DateTime @default(now()) @db.DateTime(6)
+
+  @@unique([periodType, reportDate])
+  @@map("report_logs")
+}
+
+/// Ke hoach kinh doanh theo thang - de Agent Kinh doanh co can cu THAT de so sanh,
+/// khong tu suy dien muc tieu (dung nguyen tac data-strict.md).
+model BusinessPlan {
+  id            Int      @id @default(autoincrement())
+  /// Dinh dang "YYYY-MM", vd "2026-09"
+  month         String   @unique @db.VarChar(7)
+  targetRevenue Int      @map("target_revenue")
+  notes         String?  @db.Text
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(6)
+
+  @@map("business_plans")
+}

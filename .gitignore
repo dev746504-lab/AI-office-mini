@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
+
+# Build output cua frontend (Vite) - duoc build lai tu frontend/, khong commit
+public/ai-agent-config/
+
+# Log cac tien trinh dev chay nen (backend/frontend)
+.devlogs/

@@ -1,0 +1,80 @@
+.war-room-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, #030710 0%, #060c1c 55%, #0a1628 100%);
+}
+
+.war-room-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 217, 245, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 217, 245, 0.035) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 55%, black 25%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 55%, black 25%, transparent 100%);
+}
+
+.war-room-glow-a {
+  position: absolute;
+  width: 620px;
+  height: 620px;
+  background: radial-gradient(circle, rgba(0, 217, 245, 0.1) 0%, transparent 70%);
+  top: 0%;
+  left: 8%;
+  pointer-events: none;
+}
+.war-room-glow-b {
+  position: absolute;
+  width: 480px;
+  height: 480px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+  bottom: 0%;
+  right: 6%;
+  pointer-events: none;
+}
+
+.war-room-bots {
+  position: absolute;
+  left: 50%;
+  bottom: 6%;
+  transform: translateX(-50%) scale(1.35);
+  display: flex;
+  align-items: flex-end;
+  gap: 34px;
+  filter: blur(0.4px) brightness(0.55) saturate(0.8);
+  opacity: 0.75;
+  transition:
+    filter 0.6s ease,
+    opacity 0.6s ease;
+}
+.war-room-bots.has-active .war-bot:not(.commanding) {
+  filter: brightness(0.4) saturate(0.6);
+  opacity: 0.55;
+}
+
+.war-room-desk {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: min(1100px, 96vw);
+  height: 26px;
+  border-radius: 14px 14px 0 0;
+  background: linear-gradient(180deg, #1c3464 0%, #112040 100%);
+  border: 1px solid rgba(0, 217, 245, 0.16);
+  border-bottom: none;
+  box-shadow:
+    0 -6px 40px rgba(0, 217, 245, 0.06),
+    0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+@media (max-width: 768px) {
+  .war-room-bots {
+    transform: translateX(-50%) scale(0.85);
+    gap: 20px;
+    bottom: 4%;
+  }
+}

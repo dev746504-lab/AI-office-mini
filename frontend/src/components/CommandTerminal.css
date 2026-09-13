@@ -1,0 +1,28 @@
+.terminal-code {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.7;
+  tab-size: 2;
+}
+
+.terminal-gutter {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.7;
+  user-select: none;
+}
+
+.terminal-textarea {
+  white-space: pre;
+  overflow-x: auto;
+}
+.terminal-textarea::placeholder {
+  white-space: pre-wrap;
+  opacity: 0.5;
+}
+
+.terminal-border-active {
+  box-shadow:
+    0 0 0 1px rgba(0, 217, 245, 0.3),
+    0 0 34px rgba(0, 217, 245, 0.18);
+}
