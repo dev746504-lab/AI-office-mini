@@ -47,17 +47,21 @@ export class SettingsService {
   }
 
   async saveSettings(dto: Partial<Omit<AppSettings, 'id' | 'updatedAt'>>): Promise<AppSettings> {
-    if (dto.reportSendHour != null) {
-      dto.reportSendHour = Math.min(23, Math.max(0, Math.trunc(dto.reportSendHour)));
+    // Strip id/updatedAt at runtime — frontend sends the full Prisma object back
+    // and Prisma throws "Unknown argument 'id'" if id is present in update data.
+    const { id: _id, updatedAt: _updatedAt, ...safeDto } = dto as AppSettings;
+
+    if (safeDto.reportSendHour != null) {
+      safeDto.reportSendHour = Math.min(23, Math.max(0, Math.trunc(safeDto.reportSendHour)));
     }
-    if (dto.reportSendMinute != null) {
-      dto.reportSendMinute = Math.min(59, Math.max(0, Math.trunc(dto.reportSendMinute)));
+    if (safeDto.reportSendMinute != null) {
+      safeDto.reportSendMinute = Math.min(59, Math.max(0, Math.trunc(safeDto.reportSendMinute)));
     }
-    if (dto.contentSendHour != null) {
-      dto.contentSendHour = Math.min(23, Math.max(0, Math.trunc(dto.contentSendHour)));
+    if (safeDto.contentSendHour != null) {
+      safeDto.contentSendHour = Math.min(23, Math.max(0, Math.trunc(safeDto.contentSendHour)));
     }
-    if (dto.contentSendMinute != null) {
-      dto.contentSendMinute = Math.min(59, Math.max(0, Math.trunc(dto.contentSendMinute)));
+    if (safeDto.contentSendMinute != null) {
+      safeDto.contentSendMinute = Math.min(59, Math.max(0, Math.trunc(safeDto.contentSendMinute)));
     }
 
     // Dam bao row id=1 da ton tai (bootstrap tu .env neu can) truoc khi upsert de
@@ -66,7 +70,7 @@ export class SettingsService {
 
     const updated = await this.prisma.appSettings.update({
       where: { id: 1 },
-      data: dto as Prisma.AppSettingsUpdateInput,
+      data: safeDto as Prisma.AppSettingsUpdateInput,
     });
     this.logger.log('[Settings] Da luu config moi vao DB.');
     return updated;
