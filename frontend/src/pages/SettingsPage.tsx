@@ -396,7 +396,11 @@ export default function SettingsPage() {
       <AmbientGrid />
 
       <motion.div variants={staggerContainer} initial="hidden" animate="show" className="relative z-10 flex flex-col gap-6">
-        <motion.div variants={fadeUp} className="flex flex-wrap items-center justify-between gap-3">
+        <motion.div
+          variants={fadeUp}
+          className="sticky top-0 z-30 -mx-4 flex flex-wrap items-center justify-between gap-3 px-4 py-3 md:-mx-6 md:px-6"
+          style={{ backdropFilter: 'blur(12px)', background: 'var(--color-bg-sticky, rgba(3,16,24,0.82))', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        >
           <div>
             <h1 className="font-display text-xl font-bold tracking-wide" style={{ color: 'var(--color-ink)' }}>
               CÀI ĐẶT HỆ THỐNG
