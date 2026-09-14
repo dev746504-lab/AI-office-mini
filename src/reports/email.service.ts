@@ -2,8 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 import { SettingsService } from '../settings/settings.service';
+import { ExcelService } from './excel.service';
 import type { AppSettings } from '@prisma/client';
-import type { ReportPeriodType } from './interfaces/kiotviet-data.interface';
+import type { PeriodKiotVietData, ReportPeriodType } from './interfaces/kiotviet-data.interface';
 
 const PERIOD_LABEL_VN: Record<ReportPeriodType, string> = {
   day: 'Ngày',
@@ -15,7 +16,10 @@ const PERIOD_LABEL_VN: Record<ReportPeriodType, string> = {
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
 
-  constructor(private readonly settingsService: SettingsService) {}
+  constructor(
+    private readonly settingsService: SettingsService,
+    private readonly excelService: ExcelService,
+  ) {}
 
   private createTransporter(s: AppSettings): Transporter {
     return nodemailer.createTransport({
@@ -163,7 +167,12 @@ export class EmailService {
     }
   }
 
-  async sendReport(periodType: ReportPeriodType, periodLabel: string, htmlBody: string): Promise<void> {
+  async sendReport(
+    periodType: ReportPeriodType,
+    periodLabel: string,
+    htmlBody: string,
+    data: PeriodKiotVietData,
+  ): Promise<void> {
     const s = await this.settingsService.getSettings();
 
     if (!s.smtpHost || !s.smtpUser || !s.smtpPass) {
@@ -183,6 +192,12 @@ export class EmailService {
       </div>
     `;
 
+    const safeLabel = periodLabel.replace(/[\/\\:*?"<>|]/g, '-');
+    const filename = `BaoCao_${safeLabel}.xlsx`;
+
+    this.logger.log(`[EmailService] Dang tao file Excel dinh kem...`);
+    const excelBuffer = await this.excelService.buildReportBuffer(data);
+
     this.logger.log(`[EmailService] Dang gui email bao cao (${periodType}) toi: ${to}`);
 
     try {
@@ -191,6 +206,13 @@ export class EmailService {
         to,
         subject: this.buildSubject(periodType, periodLabel),
         html: fullHtml,
+        attachments: [
+          {
+            filename,
+            content: excelBuffer,
+            contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          },
+        ],
       });
       this.logger.log(`[EmailService] Gui email thanh cong. messageId=${info.messageId}`);
     } catch (error) {

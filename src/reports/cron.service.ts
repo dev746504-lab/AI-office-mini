@@ -114,9 +114,9 @@ export class CronService {
       const htmlReport = await this.claudeService.generateReport(reportData);
       this.logger.log('[Buoc 2/3] Hoan tat - da co noi dung bao cao HTML.');
 
-      this.logger.log('[Buoc 3/3] Gui email bao cao...');
-      await this.emailService.sendReport(periodType, periodLabel, htmlReport);
-      this.logger.log('[Buoc 3/3] Hoan tat - da gui email.');
+      this.logger.log('[Buoc 3/3] Gui email bao cao kem file Excel...');
+      await this.emailService.sendReport(periodType, periodLabel, htmlReport, reportData);
+      this.logger.log('[Buoc 3/3] Hoan tat - da gui email kem file Excel.');
 
       await this.prisma.reportLog.create({
         data: {

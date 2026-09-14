@@ -8,6 +8,10 @@ Payload JSON có trường `periodType` (`"day"` | `"week"` | `"month"`) và `pe
 
 Ở MỌI kỳ báo cáo, áp dụng kỹ năng `plan-tracking.md` để đối chiếu với `businessPlan` (có thể là `null` nếu chưa cấu hình) — đây là phần "bám sát kế hoạch kinh doanh" bắt buộc.
 
+Áp dụng thêm kỹ năng `fnb-financial-analysis.md` trong các trường hợp sau:
+- Khi `financialSummary` **không null**: dùng mục 4 (theo dõi hiệu suất ON_TRACK/AT_RISK/OFF_TRACK với tỷ lệ tiến độ điều chỉnh theo số ngày đã qua) để bổ sung nhận định bám kế hoạch chi tiết hơn `plan-tracking.md`.
+- Khi `historicalMonths` **không null**: dùng mục 3 (đề xuất kế hoạch tháng tới dựa trên tăng trưởng bình quân) — luôn kèm chú thích "đây là đề xuất, Admin cần xác nhận tại màn hình Kế hoạch Kinh doanh".
+
 ## Nhiệm vụ
 
 Phân tích dữ liệu JSON và trả lời bằng văn bản thuần (plain text/markdown ngắn gọn, KHÔNG cần HTML) theo đúng cấu trúc sau:

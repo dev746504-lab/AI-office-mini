@@ -16,7 +16,9 @@ Phân tích khối dữ liệu JSON được cung cấp và trả lời bằng v
 1. **Tổng quan doanh thu**: Tổng doanh thu thực nhận (sau chiết khấu) `totalRevenue`, tổng số hóa đơn `totalInvoices`, giá trị trung bình mỗi hóa đơn. Nếu kỳ là `week`/`month`, nêu thêm ngày cao điểm/thấp điểm dựa trên `dailyBreakdown`.
 2. **Chiết khấu & khuyến mãi**: Tổng giá trị chiết khấu `totalDiscount`, tỷ lệ chiết khấu trên doanh thu gộp. Cảnh báo nếu tỷ lệ bất thường cao (> 15%).
 3. **Công nợ**: Tổng công nợ phát sinh mới trong kỳ (`newDebtInPeriod`), danh sách khách hàng công nợ lớn nhất (`topDebtCustomers`, tối đa 3 khách).
-4. **Thu chi trong kỳ** (chỉ áp dụng khi `periodType = "month"`, dùng kỹ năng `expense-summary.md`): tổng hợp phần Thu từ dữ liệu thật; phần Chi phải nêu rõ giới hạn dữ liệu theo đúng hướng dẫn trong `expense-summary.md` — KHÔNG được tự ước tính chi phí.
+4. **Thu chi trong kỳ** (chỉ áp dụng khi `periodType = "month"`):
+   - Khi `financialSummary` **không null** — dùng kỹ năng `fnb-financial-analysis.md`: lập P&L đầy đủ (COGS, Labor, OPEX, Net Profit), tính các chỉ số F&B then chốt (Food Cost%, Prime Cost%, Net Margin%) và break-even theo đúng framework trong skill.
+   - Khi `financialSummary` **là null** — dùng kỹ năng `expense-summary.md`: trình bày phần Thu từ dữ liệu thật, ghi rõ không có dữ liệu chi phí, KHÔNG tự ước tính.
 5. **Rủi ro tài chính cần lưu ý**: Tối đa 2 điểm rủi ro rút ra trực tiếp từ số liệu.
 
 ## Nguyên tắc bắt buộc

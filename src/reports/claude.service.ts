@@ -22,11 +22,11 @@ const CLAUDE_DIR = path.join(process.cwd(), '.claude');
 const AGENT_SKILLS: Record<string, string[]> = {
   'finance.md': ['expense-summary.md', 'fnb-financial-analysis.md'],
   'business.md': ['plan-tracking.md', 'fnb-financial-analysis.md'],
-  'marketing.md': ['content-writing.md', 'market-research.md', 'customer-psychology.md', 'marketing-psychology-retail.md', 'customer-behavior-signals.md', 'pack-marketing-psychology.md', 'pack-customer-research.md'],
-  'content-creator.md': ['social-post.md', 'ad-script.md', 'pack-social.md', 'pack-copywriting.md', 'pack-ad-creative.md'],
+  'marketing.md': ['content-writing.md', 'market-research.md', 'customer-psychology.md', 'marketing-psychology-retail.md', 'customer-behavior-signals.md'],
+  'content-creator.md': ['social-post.md', 'ad-script.md'],
   'finance-daily.md': [],
   'business-daily.md': [],
-  'marketing-daily.md': ['market-research.md', 'customer-psychology.md', 'marketing-psychology-retail.md', 'customer-behavior-signals.md', 'pack-marketing-psychology.md', 'pack-customer-research.md'],
+  'marketing-daily.md': ['market-research.md', 'customer-psychology.md', 'marketing-psychology-retail.md'],
 };
 
 @Injectable()
