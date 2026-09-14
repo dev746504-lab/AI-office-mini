@@ -71,6 +71,13 @@ export function saveSettings(data: Partial<AppSettingsData>): Promise<AppSetting
   }).then((res) => parseJsonOrThrow<AppSettingsData>(res));
 }
 
+export function sendTestEmail(): Promise<{ message: string }> {
+  return fetch('/api/reports/test-email', {
+    method: 'POST',
+    headers: authHeaders(),
+  }).then((res) => parseJsonOrThrow<{ message: string }>(res));
+}
+
 // ── Auth / Users (admin only cho quan ly user) ─────────────────────────────
 
 export function fetchCurrentUser(token: string): Promise<AuthUser> {

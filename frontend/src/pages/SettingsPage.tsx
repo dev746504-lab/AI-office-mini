@@ -20,6 +20,7 @@ import {
   saveBusinessPlan,
   saveContentScheduleItem,
   saveSettings,
+  sendTestEmail,
 } from '../api';
 import { fadeUp, staggerContainer } from '../motionVariants';
 import type { AgentScheduleItem, AgentSendConfig, AppSettingsData, AuthUser, BrandContext, BusinessPlan, ContentScheduleItem, UserRole } from '../types';
@@ -94,6 +95,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [testingEmail, setTestingEmail] = useState(false);
   const [toast, setToast] = useState<CommandToastState | null>(null);
 
   const [users, setUsers] = useState<AuthUser[] | null>(null);
@@ -171,6 +173,18 @@ export default function SettingsPage() {
 
   const update = <K extends keyof AppSettingsData>(key: K, value: AppSettingsData[K]) => {
     setSettings((prev) => (prev ? { ...prev, [key]: value } : prev));
+  };
+
+  const handleTestEmail = async () => {
+    setTestingEmail(true);
+    try {
+      const res = await sendTestEmail();
+      showToast(res.message, 'success');
+    } catch (err) {
+      showToast((err as Error).message, 'error');
+    } finally {
+      setTestingEmail(false);
+    }
   };
 
   const handleSave = async () => {
@@ -680,6 +694,16 @@ export default function SettingsPage() {
               onChange={(e) => update('reportEmailTo', e.target.value)}
             />
           </Field>
+          <div className="flex items-center justify-end border-t border-white/8 pt-3">
+            <button
+              type="button"
+              onClick={handleTestEmail}
+              disabled={testingEmail}
+              className="rounded-xl border border-cyan-400/30 px-4 py-2 font-mono text-xs text-cyan-400 transition-colors hover:bg-cyan-400/10 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {testingEmail ? '⏳ Đang gửi...' : '🧪 Gửi test email (data giả + Excel)'}
+            </button>
+          </div>
         </SectionCard>
 
         {/* Agent Runner — Finance, Business, Marketing */}
