@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import type { Transporter } from 'nodemailer';
+import { Resend } from 'resend';
 import { SettingsService } from '../settings/settings.service';
 import { ExcelService } from './excel.service';
 import type { AppSettings } from '@prisma/client';
@@ -12,6 +12,14 @@ const PERIOD_LABEL_VN: Record<ReportPeriodType, string> = {
   month: 'Tháng',
 };
 
+interface MailParams {
+  from: string;
+  to: string;
+  subject: string;
+  html: string;
+  attachments?: { filename: string; content: Buffer; contentType?: string }[];
+}
+
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
@@ -21,16 +29,30 @@ export class EmailService {
     private readonly excelService: ExcelService,
   ) {}
 
-  private createTransporter(s: AppSettings): Transporter {
-    return nodemailer.createTransport({
-      host: s.smtpHost ?? '',
-      port: s.smtpPort ?? 465,
-      secure: s.smtpSecure ?? true,
-      auth: {
-        user: s.smtpUser ?? '',
-        pass: s.smtpPass ?? '',
-      },
-    });
+  private isResend(s: AppSettings): boolean {
+    return (s.smtpHost ?? '').toLowerCase().includes('resend.com');
+  }
+
+  private async dispatch(s: AppSettings, params: MailParams): Promise<void> {
+    if (this.isResend(s)) {
+      const resend = new Resend(s.smtpPass ?? '');
+      const { error } = await resend.emails.send({
+        from: params.from,
+        to: [params.to],
+        subject: params.subject,
+        html: params.html,
+        attachments: params.attachments?.map((a) => ({ filename: a.filename, content: a.content })),
+      });
+      if (error) throw new Error(`Resend API error: ${JSON.stringify(error)}`);
+    } else {
+      const transporter = nodemailer.createTransport({
+        host: s.smtpHost ?? '',
+        port: s.smtpPort ?? 465,
+        secure: s.smtpSecure ?? true,
+        auth: { user: s.smtpUser ?? '', pass: s.smtpPass ?? '' },
+      });
+      await transporter.sendMail(params);
+    }
   }
 
   private buildSubject(periodType: ReportPeriodType, periodLabel: string): string {
@@ -86,14 +108,12 @@ export class EmailService {
       </table>
     `;
 
-    const transporter = this.createTransporter(s);
-    const from = s.reportEmailFrom ?? s.smtpUser;
-
+    const from = s.reportEmailFrom ?? s.smtpUser ?? '';
     this.logger.log(`[EmailService] Dang gui email content (${dateStr}) toi: ${s.reportEmailTo}`);
 
     try {
-      const info = await transporter.sendMail({ from, to: s.reportEmailTo, subject, html: htmlBody });
-      this.logger.log(`[EmailService] Gui email content thanh cong. messageId=${info.messageId}`);
+      await this.dispatch(s, { from, to: s.reportEmailTo!, subject, html: htmlBody });
+      this.logger.log(`[EmailService] Gui email content thanh cong.`);
     } catch (error) {
       this.logger.error(`[EmailService] Gui email content that bai: ${(error as Error).message}`);
       throw error;
@@ -154,13 +174,12 @@ export class EmailService {
       </table>
     `;
 
-    const transporter = this.createTransporter(s);
-    const from = s.reportEmailFrom ?? s.smtpUser;
+    const from = s.reportEmailFrom ?? s.smtpUser ?? '';
     this.logger.log(`[EmailService] Dang gui email agent ${agentName} (${dateStr}) toi: ${s.reportEmailTo}`);
 
     try {
-      const info = await transporter.sendMail({ from, to: s.reportEmailTo, subject, html: htmlBody });
-      this.logger.log(`[EmailService] Gui email agent ${agentName} thanh cong. messageId=${info.messageId}`);
+      await this.dispatch(s, { from, to: s.reportEmailTo!, subject, html: htmlBody });
+      this.logger.log(`[EmailService] Gui email agent ${agentName} thanh cong.`);
     } catch (error) {
       this.logger.error(`[EmailService] Gui email agent ${agentName} that bai: ${(error as Error).message}`);
       throw error;
@@ -182,9 +201,8 @@ export class EmailService {
       throw new Error('Chua cau hinh email nguoi nhan. Vao Settings de dien vao.');
     }
 
-    const transporter = this.createTransporter(s);
-    const from = s.reportEmailFrom ?? s.smtpUser;
-    const to = s.reportEmailTo;
+    const from = s.reportEmailFrom ?? s.smtpUser ?? '';
+    const to = s.reportEmailTo!;
 
     const fullHtml = `
       <div style="background-color:#f4f4f4;padding:24px 0;font-family:Arial,Helvetica,sans-serif;">
@@ -201,7 +219,7 @@ export class EmailService {
     this.logger.log(`[EmailService] Dang gui email bao cao (${periodType}) toi: ${to}`);
 
     try {
-      const info = await transporter.sendMail({
+      await this.dispatch(s, {
         from,
         to,
         subject: this.buildSubject(periodType, periodLabel),
@@ -214,7 +232,7 @@ export class EmailService {
           },
         ],
       });
-      this.logger.log(`[EmailService] Gui email thanh cong. messageId=${info.messageId}`);
+      this.logger.log(`[EmailService] Gui email thanh cong.`);
     } catch (error) {
       this.logger.error(`[EmailService] Gui email that bai: ${(error as Error).message}`);
       throw error;
