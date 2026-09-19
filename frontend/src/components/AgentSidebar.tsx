@@ -91,7 +91,7 @@ export function AgentSidebar({ entries, selected, dirtyAgent, onSelect }: AgentS
   })).filter((g) => g.items.length > 0);
 
   return (
-    <nav className="flex w-full shrink-0 flex-row gap-3 overflow-x-auto px-4 py-3 md:w-72 md:flex-col md:gap-6 md:overflow-visible md:px-0 md:py-0">
+    <nav className="flex w-full shrink-0 flex-row gap-3 overflow-x-auto px-4 py-3 md:w-72 md:flex-col md:gap-6 md:overflow-y-auto md:px-0 md:py-0">
       {groups.map(({ group, items }, idx) => (
         <div key={group} className="flex shrink-0 flex-row items-stretch gap-3 md:flex-col md:gap-2">
           {idx > 0 && <div className="my-auto block w-px self-stretch bg-white/10 md:hidden" />}

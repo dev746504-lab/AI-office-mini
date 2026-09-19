@@ -51,7 +51,7 @@ export function NavSidebar() {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-row gap-1 overflow-x-auto md:flex-col md:gap-1.5 md:overflow-visible">
+      <div className="flex flex-1 flex-row gap-1 overflow-x-auto md:flex-col md:gap-1.5 md:overflow-y-auto">
         {visibleItems.map((item) => (
           <NavLink
             key={item.to}
