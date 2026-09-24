@@ -86,3 +86,23 @@ export interface AgentScheduleItem {
   theme: string | null;
   notes: string | null;
 }
+
+export interface ReportFeedback {
+  id: number;
+  reportLogId: number;
+  rating: number;
+  comment: string | null;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface ReportLog {
+  id: number;
+  periodType: 'day' | 'week' | 'month';
+  reportDate: string;
+  status: 'success' | 'failed';
+  invoiceCount: number;
+  errorMessage: string | null;
+  createdAt: string;
+  latestFeedback: ReportFeedback | null;
+}

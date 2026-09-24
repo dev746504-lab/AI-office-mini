@@ -1,20 +1,122 @@
-import { Controller, HttpCode, Logger, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Logger,
+  Param,
+  ParseIntPipe,
+  Post,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { EmailService } from './email.service';
+import { PrismaService } from '../prisma/prisma.service';
 import type { PeriodKiotVietData } from './interfaces/kiotviet-data.interface';
+
+interface AuthRequest extends Request {
+  user: { userId: number; email: string; role: string };
+}
+
+interface CreateFeedbackDto {
+  rating: number;
+  comment?: string;
+}
 
 @Controller('api/reports')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
 export class ReportsController {
   private readonly logger = new Logger(ReportsController.name);
 
-  constructor(private readonly emailService: EmailService) {}
+  constructor(
+    private readonly emailService: EmailService,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  // ── Lịch sử báo cáo ───────────────────────────────────────────────────────
+
+  @Get('logs')
+  @Roles('admin', 'ai_manager')
+  async getReportLogs() {
+    const logs = await this.prisma.reportLog.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      include: {
+        feedbacks: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+      },
+    });
+
+    return logs.map((log) => ({
+      id: log.id,
+      periodType: log.periodType,
+      reportDate: log.reportDate,
+      status: log.status,
+      invoiceCount: log.invoiceCount,
+      errorMessage: log.errorMessage,
+      createdAt: log.createdAt,
+      latestFeedback: log.feedbacks[0] ?? null,
+    }));
+  }
+
+  // ── Feedback ──────────────────────────────────────────────────────────────
+
+  @Post(':id/feedback')
+  @HttpCode(200)
+  @Roles('admin', 'ai_manager')
+  async submitFeedback(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: CreateFeedbackDto,
+    @Request() req: AuthRequest,
+  ) {
+    const { rating, comment } = body;
+
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      throw new Error('rating phai la so nguyen tu 1 den 5');
+    }
+
+    const reportLog = await this.prisma.reportLog.findUnique({ where: { id } });
+    if (!reportLog) {
+      throw new Error(`Khong tim thay bao cao voi id=${id}`);
+    }
+
+    const feedback = await this.prisma.reportFeedback.create({
+      data: {
+        reportLogId: id,
+        rating,
+        comment: comment ?? null,
+        createdBy: req.user?.email ?? 'unknown',
+      },
+    });
+
+    this.logger.log(`[Feedback] Bao cao #${id} duoc danh gia ${rating}/5 boi ${feedback.createdBy}`);
+    return feedback;
+  }
+
+  @Get('feedback')
+  @Roles('admin')
+  async getAllFeedback() {
+    return this.prisma.reportFeedback.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+      include: {
+        reportLog: {
+          select: { periodType: true, reportDate: true, status: true },
+        },
+      },
+    });
+  }
+
+  // ── Test email ────────────────────────────────────────────────────────────
 
   @Post('test-email')
   @HttpCode(200)
+  @Roles('admin')
   async sendTestEmail(): Promise<{ message: string }> {
     this.logger.log('[TestEmail] Bat dau gui email test...');
 
@@ -100,7 +202,7 @@ export class ReportsController {
           <table width="680" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:8px;overflow:hidden;max-width:680px;">
             <tr>
               <td style="background:#1a1a2e;padding:20px 28px;">
-                <h2 style="margin:0;color:#00d4aa;font-size:18px;">🧪 EMAIL TEST — ${fakeData.periodLabel}</h2>
+                <h2 style="margin:0;color:#00d4aa;font-size:18px;">EMAIL TEST — ${fakeData.periodLabel}</h2>
                 <p style="margin:4px 0 0;color:#aaa;font-size:13px;">Dữ liệu giả — kiểm tra kết nối SMTP &amp; file Excel đính kèm</p>
               </td>
             </tr>
@@ -115,16 +217,15 @@ export class ReportsController {
                   <tr style="background:#f9f9f9;"><td>Số hóa đơn</td><td style="text-align:right;">73</td></tr>
                   <tr><td>Chiết khấu</td><td style="text-align:right;">1.200.000 đ</td></tr>
                   <tr style="background:#f9f9f9;"><td>Lợi nhuận ròng</td><td style="text-align:right;color:#1e7e34;">7.250.000 đ</td></tr>
-                  <tr><td>Tiến độ kế hoạch tháng</td><td style="text-align:right;">23,1% / 80tr mục tiêu</td></tr>
                 </table>
                 <p style="margin:20px 0 0;font-size:13px;color:#555;">
-                  ✅ Nếu bạn nhận được email này kèm file <strong>Excel</strong>, hệ thống SMTP đã hoạt động đúng.
+                  Nếu bạn nhận được email này kèm file Excel, hệ thống SMTP đã hoạt động đúng.
                 </p>
               </td>
             </tr>
             <tr>
               <td style="padding:12px 28px 20px;border-top:1px solid #eee;">
-                <p style="margin:0;font-size:11px;color:#999;">Email test tự động — The Brew Corner AI Office</p>
+                <p style="margin:0;font-size:11px;color:#999;">Email test tự động — AI Office Mini</p>
               </td>
             </tr>
           </table>
@@ -134,6 +235,6 @@ export class ReportsController {
 
     await this.emailService.sendReport('week', fakeData.periodLabel, htmlBody, fakeData);
     this.logger.log('[TestEmail] Gui email test thanh cong.');
-    return { message: 'Email test đã được gửi. Kiểm tra hộp thư dev746504@gmail.com.' };
+    return { message: 'Email test đã được gửi thành công.' };
   }
 }

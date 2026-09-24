@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { Prisma } from '@prisma/client';
 import { KiotVietService } from './kiotviet.service';
 import { ClaudeService } from './claude.service';
 import { EmailService } from './email.service';
@@ -89,6 +90,8 @@ export class CronService {
   /**
    * Tach rieng logic chay bao cao (khong gan voi lich chay) de co the goi
    * thu cong khi can (vi du: chay lai bao cao cua 1 ky bi loi).
+   * - withRetry: tu dong thu lai toi da 2 lan neu KiotViet/Claude/Email timeout/loi.
+   * - generateReport tra ve { html, agentTrace } — trace ghi vao agent_trace trong DB.
    */
   async runReport(periodType: ReportPeriodType, fromDateStr: string, toDateStr: string): Promise<void> {
     const periodLabel = this.buildPeriodLabel(periodType, fromDateStr, toDateStr);
@@ -99,23 +102,29 @@ export class CronService {
     try {
       const businessPlan = await this.resolveBusinessPlan(toDateStr);
 
-      this.logger.log('[Buoc 1/3] Lay du lieu tu KiotViet...');
-      const reportData = await this.kiotVietService.fetchReportData(
-        fromDateStr,
-        toDateStr,
-        periodType,
-        periodLabel,
-        businessPlan,
+      this.logger.log('[Buoc 1/3] Lay du lieu tu KiotViet (retry <= 2 lan neu loi)...');
+      const reportData = await this.withRetry(
+        () => this.kiotVietService.fetchReportData(fromDateStr, toDateStr, periodType, periodLabel, businessPlan),
+        2,
+        'KiotViet fetchReportData',
       );
       invoiceCount = reportData.totalInvoices;
       this.logger.log(`[Buoc 1/3] Hoan tat - ${invoiceCount} hoa don.`);
 
-      this.logger.log('[Buoc 2/3] Goi Claude Multi-Agent de phan tich va dung bao cao...');
-      const htmlReport = await this.claudeService.generateReport(reportData);
+      this.logger.log('[Buoc 2/3] Goi Claude Multi-Agent (retry <= 2 lan neu loi)...');
+      const { html: htmlReport, agentTrace } = await this.withRetry(
+        () => this.claudeService.generateReport(reportData),
+        2,
+        'Claude generateReport',
+      );
       this.logger.log('[Buoc 2/3] Hoan tat - da co noi dung bao cao HTML.');
 
-      this.logger.log('[Buoc 3/3] Gui email bao cao kem file Excel...');
-      await this.emailService.sendReport(periodType, periodLabel, htmlReport, reportData);
+      this.logger.log('[Buoc 3/3] Gui email bao cao kem file Excel (retry <= 2 lan neu loi)...');
+      await this.withRetry(
+        () => this.emailService.sendReport(periodType, periodLabel, htmlReport, reportData),
+        2,
+        'Email sendReport',
+      );
       this.logger.log('[Buoc 3/3] Hoan tat - da gui email kem file Excel.');
 
       await this.prisma.reportLog.create({
@@ -125,6 +134,7 @@ export class CronService {
           status: 'success',
           invoiceCount,
           errorMessage: null,
+          agentTrace: agentTrace as unknown as Prisma.InputJsonValue,
         },
       });
 
@@ -140,9 +150,42 @@ export class CronService {
           status: 'failed',
           invoiceCount,
           errorMessage: message,
+          agentTrace: Prisma.JsonNull,
         },
       });
     }
+  }
+
+  /**
+   * Retry helper: thu lai toi da maxRetries lan khi gap loi co the retry duoc.
+   * Loi xac thuc (API key khong hop le, unauthorized) KHONG duoc retry.
+   * Backoff: 2s sau lan 1, 4s sau lan 2.
+   */
+  private async withRetry<T>(fn: () => Promise<T>, maxRetries: number, label: string): Promise<T> {
+    let lastError: Error = new Error('Loi khong xac dinh');
+    for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+      try {
+        return await fn();
+      } catch (err) {
+        lastError = err as Error;
+        const msg = lastError.message?.toLowerCase() ?? '';
+        const isAuthError =
+          msg.includes('api key') ||
+          msg.includes('authentication') ||
+          msg.includes('unauthorized') ||
+          msg.includes('401');
+        if (attempt <= maxRetries && !isAuthError) {
+          const delay = attempt * 2000;
+          this.logger.warn(
+            `[Retry ${attempt}/${maxRetries}] ${label} that bai, thu lai sau ${delay / 1000}s: ${lastError.message}`,
+          );
+          await new Promise((res) => setTimeout(res, delay));
+        } else {
+          throw lastError;
+        }
+      }
+    }
+    throw lastError;
   }
 
   /** Lay ke hoach kinh doanh cua thang chua ngay cuoi ky (toDateStr) - null neu chua cau hinh. */

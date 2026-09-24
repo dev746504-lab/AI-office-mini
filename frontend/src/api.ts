@@ -1,4 +1,4 @@
-import type { AgentScheduleItem, AgentSendConfig, AiConfigEntry, AiConfigResult, ApiError, AppSettingsData, AuthUser, BrandContext, BusinessPlan, ContentScheduleItem } from './types';
+import type { AgentScheduleItem, AgentSendConfig, AiConfigEntry, AiConfigResult, ApiError, AppSettingsData, AuthUser, BrandContext, BusinessPlan, ContentScheduleItem, ReportFeedback, ReportLog } from './types';
 import { clearToken, getToken } from './auth/token';
 
 const LOGIN_PATH = '/ai-agent-config/login';
@@ -198,4 +198,24 @@ export function saveAgentScheduleItem(item: AgentScheduleItem): Promise<AgentSch
     headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(item),
   }).then((res) => parseJsonOrThrow<AgentScheduleItem>(res));
+}
+
+// ── Lịch sử báo cáo ─────────────────────────────────────────────────────────
+
+export function fetchReportLogs(): Promise<ReportLog[]> {
+  return fetch('/api/reports/logs', { headers: authHeaders() }).then((res) =>
+    parseJsonOrThrow<ReportLog[]>(res),
+  );
+}
+
+export function submitReportFeedback(
+  reportLogId: number,
+  rating: number,
+  comment?: string,
+): Promise<ReportFeedback> {
+  return fetch(`/api/reports/${reportLogId}/feedback`, {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ rating, comment }),
+  }).then((res) => parseJsonOrThrow<ReportFeedback>(res));
 }

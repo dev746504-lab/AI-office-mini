@@ -117,17 +117,34 @@ model AgentLog {
 }
 
 model ReportLog {
-  id           Int      @id @default(autoincrement())
+  id           Int              @id @default(autoincrement())
   /// "day" | "week" | "month" - loai bao cao, dung de phan biet dedup theo tung chu ky
-  periodType   String   @default("day") @map("period_type") @db.VarChar(10)
-  reportDate   DateTime @db.Date
-  status       String   @db.VarChar(20)
-  invoiceCount Int      @default(0)
-  errorMessage String?  @db.Text
-  createdAt    DateTime @default(now()) @db.DateTime(6)
+  periodType   String           @default("day") @map("period_type") @db.VarChar(10)
+  reportDate   DateTime         @db.Date
+  status       String           @db.VarChar(20)
+  invoiceCount Int              @default(0)
+  errorMessage String?          @db.Text
+  /// Trace cac tool call cua tung agent trong pipeline, luu de debug sau nay.
+  agentTrace   Json?            @map("agent_trace")
+  createdAt    DateTime         @default(now()) @db.DateTime(6)
+  feedbacks    ReportFeedback[]
 
   @@unique([periodType, reportDate])
   @@map("report_logs")
+}
+
+/// Feedback ve chat luong bao cao tu admin/ai_manager — luu de review dinh ky va cai thien prompt.
+model ReportFeedback {
+  id          Int       @id @default(autoincrement())
+  reportLogId Int       @map("report_log_id")
+  /// Diem danh gia 1-5 sao
+  rating      Int       @db.TinyInt
+  comment     String?   @db.Text
+  createdBy   String    @map("created_by") @db.VarChar(100)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.DateTime(6)
+  reportLog   ReportLog @relation(fields: [reportLogId], references: [id])
+
+  @@map("report_feedback")
 }
 
 /// Ke hoach kinh doanh theo thang - de Agent Kinh doanh co can cu THAT de so sanh,
